@@ -1,18 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, Baloo_2 } from "next/font/google";
+import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/lib/auth/AuthContext";
 import "./globals.css";
 
-const inter = Inter({
+// Self-hosted instead of next/font/google: Turbopack's Google Fonts fetch at build time
+// started failing (404s on the specific woff2 hashes it requested) with no code change on
+// our side, which broke every production build. These are the same files Google serves,
+// just vendored so builds don't depend on that endpoint being up.
+const inter = localFont({
+  src: "./fonts/Inter-latin.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
+  weight: "100 900",
+  display: "swap",
 });
 
-const baloo = Baloo_2({
+const baloo = localFont({
+  src: "./fonts/Baloo2-latin.woff2",
   variable: "--font-baloo",
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  weight: "500 800",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
