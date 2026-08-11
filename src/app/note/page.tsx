@@ -3,11 +3,12 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Download, Pencil } from "lucide-react";
+import { ChevronDown, ChevronLeft, Download, Pencil } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { getSubject } from "@/lib/firebase/subjects";
 import { getNote, downloadNote } from "@/lib/firebase/notes";
+import { elementToPdf } from "@/lib/pdfExport";
 import { NOTE_TYPE_META } from "@/lib/noteTypeMeta";
 import type { Note, Subject } from "@/types";
 import { MarkdownWithToc } from "@/components/notes/MarkdownWithToc";
@@ -17,6 +18,12 @@ import { EditNoteDialog } from "@/components/notes/EditNoteDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -68,6 +75,21 @@ function NotePageInner() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!note) return;
+    const target = document.getElementById("markdown-note-content");
+    if (!target) return;
+    setDownloading(true);
+    try {
+      const filename = `${note.title.replace(/[/\\]/g, "-")}.pdf`;
+      await elementToPdf(target, filename);
+    } catch {
+      toast.error("No pudimos generar el PDF");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const backHref = `/dashboard/subject?year=${yearId}&id=${subjectId}`;
 
   return (
@@ -100,18 +122,36 @@ function NotePageInner() {
                   </Button>
                 }
               />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDownload}
-                disabled={downloading}
-                className="h-8 px-2.5"
-              >
-                <Download className="size-4" />
-                <span className="hidden sm:inline">
-                  {downloading ? "Descargando…" : "Descargar"}
-                </span>
-              </Button>
+              {note.type === "markdown" ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" disabled={downloading} className="h-8 px-2.5">
+                      <Download className="size-4" />
+                      <span className="hidden sm:inline">
+                        {downloading ? "Descargando…" : "Descargar"}
+                      </span>
+                      <ChevronDown className="size-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={handleDownload}>Como Markdown (.md)</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={handleDownloadPdf}>Como PDF</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  className="h-8 px-2.5"
+                >
+                  <Download className="size-4" />
+                  <span className="hidden sm:inline">
+                    {downloading ? "Descargando…" : "Descargar"}
+                  </span>
+                </Button>
+              )}
               <div className="ml-2 hidden items-center gap-2 sm:flex">
                 <Avatar className="size-6">
                   <AvatarImage src={note.authorPhotoURL ?? undefined} alt={note.authorName} />

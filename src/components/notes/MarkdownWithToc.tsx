@@ -100,7 +100,11 @@ export function MarkdownWithToc({ content }: { content: string }) {
           </div>
         )}
 
-        <div ref={contentRef} className="mx-auto max-w-3xl px-6 py-10 sm:px-8">
+        <div
+          ref={contentRef}
+          id="markdown-note-content"
+          className="mx-auto max-w-3xl px-6 py-10 sm:px-8"
+        >
           <MarkdownViewer content={content} />
         </div>
       </div>
