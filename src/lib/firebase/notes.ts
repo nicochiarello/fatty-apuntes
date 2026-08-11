@@ -7,6 +7,7 @@ import {
   orderBy,
   query,
   setDoc,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import {
@@ -38,6 +39,18 @@ export function detectNoteType(fileName: string): NoteType | null {
   if (HTML_EXTENSIONS.some((ext) => lower.endsWith(ext))) return "html";
   if (PDF_EXTENSIONS.some((ext) => lower.endsWith(ext))) return "pdf";
   return null;
+}
+
+function assertValidFile(file: File): NoteType {
+  const type = detectNoteType(file.name);
+  if (!type) {
+    throw new Error("Solo se permiten archivos .md, .html o .pdf");
+  }
+  const maxSize = MAX_NOTE_SIZE_BYTES[type];
+  if (file.size > maxSize) {
+    throw new Error(`El archivo supera el tamaño máximo permitido (${maxSize / (1024 * 1024)}MB)`);
+  }
+  return type;
 }
 
 export function getNoteFileName(note: Note): string {
@@ -86,14 +99,7 @@ export async function uploadNote({
   subjectId,
   user,
 }: UploadNoteInput) {
-  const type = detectNoteType(file.name);
-  if (!type) {
-    throw new Error("Solo se permiten archivos .md, .html o .pdf");
-  }
-  const maxSize = MAX_NOTE_SIZE_BYTES[type];
-  if (file.size > maxSize) {
-    throw new Error(`El archivo supera el tamaño máximo permitido (${maxSize / (1024 * 1024)}MB)`);
-  }
+  const type = assertValidFile(file);
 
   const noteRef = doc(notesCol);
   const storagePath = `notes/${yearId}/${subjectId}/${noteRef.id}/${file.name}`;
@@ -120,6 +126,40 @@ export async function uploadNote({
   await setDoc(noteRef, note);
 
   return noteRef.id;
+}
+
+interface UpdateNoteInput {
+  note: Note;
+  title: string;
+  description: string;
+  file?: File | null;
+}
+
+export async function updateNote({ note, title, description, file }: UpdateNoteInput) {
+  const updates: Partial<Note> = {
+    title: title.trim() || note.title,
+    description: description.trim(),
+  };
+
+  if (file) {
+    const type = assertValidFile(file);
+
+    await deleteObject(ref(storage, note.storagePath)).catch(() => {
+      // El archivo original puede ya no existir en Storage; ignoramos el error.
+    });
+
+    const storagePath = `notes/${note.yearId}/${note.subjectId}/${note.id}/${file.name}`;
+    const storageRef = ref(storage, storagePath);
+    await uploadBytes(storageRef, file, { contentType: contentTypeFor(type) });
+    const downloadURL = await getDownloadURL(storageRef);
+
+    updates.type = type;
+    updates.storagePath = storagePath;
+    updates.downloadURL = downloadURL;
+    updates.size = file.size;
+  }
+
+  await updateDoc(doc(db, "notes", note.id), updates);
 }
 
 export async function deleteNote(note: Note) {

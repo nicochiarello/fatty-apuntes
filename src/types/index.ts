@@ -12,6 +12,8 @@ export interface Subject {
   id: string;
   yearId: string;
   name: string;
+  icon: string;
+  color: string;
   order: number;
   createdBy: string;
   createdAt: number;

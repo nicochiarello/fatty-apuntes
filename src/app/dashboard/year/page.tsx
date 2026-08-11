@@ -2,13 +2,14 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BookOpenText } from "lucide-react";
+import { BookOpenText, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { getYear } from "@/lib/firebase/years";
 import { subscribeSubjects, deleteSubject } from "@/lib/firebase/subjects";
 import type { Subject, Year } from "@/types";
 import { SubjectCard } from "@/components/subjects/SubjectCard";
-import { CreateSubjectDialog } from "@/components/subjects/CreateSubjectDialog";
+import { SubjectDialog } from "@/components/subjects/SubjectDialog";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { ConfirmDialog } from "@/components/layout/ConfirmDialog";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -40,7 +41,15 @@ function YearPageInner() {
             Elegí una materia para ver sus apuntes.
           </p>
         </div>
-        <CreateSubjectDialog yearId={yearId} />
+        <SubjectDialog
+          yearId={yearId}
+          trigger={
+            <Button>
+              <Plus className="size-4" />
+              Nueva materia
+            </Button>
+          }
+        />
       </div>
 
       {subjects === null && (
@@ -56,7 +65,17 @@ function YearPageInner() {
           icon={BookOpenText}
           title="Todavía no hay materias"
           description="Creá la primera materia de este año."
-          action={<CreateSubjectDialog yearId={yearId} />}
+          action={
+            <SubjectDialog
+              yearId={yearId}
+              trigger={
+                <Button>
+                  <Plus className="size-4" />
+                  Nueva materia
+                </Button>
+              }
+            />
+          }
         />
       )}
 

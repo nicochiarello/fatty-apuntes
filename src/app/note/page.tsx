@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Download } from "lucide-react";
+import { ChevronLeft, Download, Pencil } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { getSubject } from "@/lib/firebase/subjects";
@@ -13,6 +13,7 @@ import type { Note, Subject } from "@/types";
 import { MarkdownViewer } from "@/components/notes/MarkdownViewer";
 import { HtmlViewer } from "@/components/notes/HtmlViewer";
 import { PdfViewer } from "@/components/notes/PdfViewer";
+import { EditNoteDialog } from "@/components/notes/EditNoteDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,13 @@ function NotePageInner() {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  const refreshNote = () => {
+    if (!noteId) return;
+    setContent(null);
+    setError(false);
+    getNote(noteId).then(setNote);
+  };
 
   useEffect(() => {
     if (!yearId || !subjectId || !noteId) return;
@@ -81,7 +89,17 @@ function NotePageInner() {
             <Badge variant={NOTE_TYPE_META[note.type].badgeVariant} className="shrink-0">
               {NOTE_TYPE_META[note.type].label}
             </Badge>
-            <div className="ml-auto flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+            <div className="ml-auto flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+              <EditNoteDialog
+                note={note}
+                onUpdated={refreshNote}
+                trigger={
+                  <Button variant="ghost" size="sm" className="h-8 px-2.5">
+                    <Pencil className="size-4" />
+                    <span className="hidden sm:inline">Editar</span>
+                  </Button>
+                }
+              />
               <Button
                 variant="ghost"
                 size="sm"
@@ -94,7 +112,7 @@ function NotePageInner() {
                   {downloading ? "Descargando…" : "Descargar"}
                 </span>
               </Button>
-              <div className="hidden items-center gap-2 sm:flex">
+              <div className="ml-2 hidden items-center gap-2 sm:flex">
                 <Avatar className="size-6">
                   <AvatarImage src={note.authorPhotoURL ?? undefined} alt={note.authorName} />
                   <AvatarFallback className="text-[10px]">
