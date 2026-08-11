@@ -10,7 +10,7 @@ import { getSubject } from "@/lib/firebase/subjects";
 import { getNote, downloadNote } from "@/lib/firebase/notes";
 import { NOTE_TYPE_META } from "@/lib/noteTypeMeta";
 import type { Note, Subject } from "@/types";
-import { MarkdownViewer } from "@/components/notes/MarkdownViewer";
+import { MarkdownWithToc } from "@/components/notes/MarkdownWithToc";
 import { HtmlViewer } from "@/components/notes/HtmlViewer";
 import { PdfViewer } from "@/components/notes/PdfViewer";
 import { EditNoteDialog } from "@/components/notes/EditNoteDialog";
@@ -163,11 +163,7 @@ function NotePageInner() {
             )}
 
             {!error && content !== null && note.type === "markdown" && (
-              <div className="h-full overflow-y-auto">
-                <div className="mx-auto max-w-3xl px-6 py-10 sm:px-8">
-                  <MarkdownViewer content={content} />
-                </div>
-              </div>
+              <MarkdownWithToc content={content} />
             )}
 
             {!error && content !== null && note.type === "html" && (
