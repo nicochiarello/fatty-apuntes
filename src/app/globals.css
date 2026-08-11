@@ -90,4 +90,8 @@ body {
   .prose pre :where(span) {
     color: #1a1a1a !important;
   }
+
+  [data-sonner-toaster] {
+    display: none !important;
+  }
 }
