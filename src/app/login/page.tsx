@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Logo } from "@/components/layout/Logo";
+import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function LoginPage() {
@@ -16,6 +17,13 @@ export default function LoginPage() {
       router.replace("/dashboard");
     }
   }, [loading, user, router]);
+
+  // loading covers both the initial auth check and, after coming back from Google's
+  // redirect, the few seconds it takes to resolve the sign-in — without this the login
+  // card would flash back up as if nothing happened before the redirect to /dashboard.
+  if (loading || user) {
+    return <FullScreenLoader label="Ingresando…" />;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">

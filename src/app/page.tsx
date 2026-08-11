@@ -6,6 +6,7 @@ import { BookOpen, FileCode2, Users, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Logo } from "@/components/layout/Logo";
+import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const FEATURES = [
@@ -35,6 +36,13 @@ export default function Home() {
       router.replace("/dashboard");
     }
   }, [loading, user, router]);
+
+  // Covers the initial auth check and, after returning from Google's redirect, the few
+  // seconds it takes to resolve sign-in — otherwise the landing page would flash back up
+  // as if nothing happened before redirecting to /dashboard.
+  if (loading || user) {
+    return <FullScreenLoader label="Ingresando…" />;
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden">
