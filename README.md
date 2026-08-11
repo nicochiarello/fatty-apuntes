@@ -68,6 +68,17 @@ firebase deploy --only hosting
 
 Una vez desplegado, andá a **Authentication → Settings → Authorized domains** en la consola de Firebase y agregá el dominio de Hosting (`tu-proyecto.web.app`) para que el login con Google funcione en producción.
 
+### CORS en el bucket de Storage
+
+Los apuntes (Markdown/HTML) se leen con `fetch()` para renderizarlos, y eso requiere que el bucket de Storage tenga CORS habilitado para el dominio de la app — si no, el navegador bloquea la lectura con un error de CORS (aunque el link directo al archivo funcione). Se configura una sola vez con el [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (`gcloud`/`gsutil`):
+
+```bash
+gcloud auth login
+gsutil cors set cors.json gs://tu-proyecto.firebasestorage.app
+```
+
+`cors.json` ya está en el repo con los orígenes de este proyecto (`web.app`, `firebaseapp.com`, `localhost:3000`) — actualizalo si cambiás de dominio.
+
 ## Cómo está organizado
 
 - `src/lib/firebase/` — cliente de Firebase y funciones de lectura/escritura de Firestore/Storage (`years.ts`, `subjects.ts`, `notes.ts`).
