@@ -64,3 +64,30 @@ body {
   background: var(--primary);
   color: var(--primary-foreground);
 }
+
+/* Printing a note (see /note's "Descargar como PDF") should always read like plain paper —
+   force light colors regardless of the viewer's dark mode, and drop the syntax-highlighting
+   theme's dark background so code blocks don't print as black boxes. */
+@media print {
+  body {
+    background: #ffffff;
+    color: #1a1a1a;
+  }
+
+  .prose {
+    color: #1a1a1a;
+  }
+
+  .prose :where(h1, h2, h3, h4, h5, h6, strong, th) {
+    color: #000000;
+  }
+
+  .prose :where(code, pre) {
+    background: #f4f4f4 !important;
+    color: #1a1a1a !important;
+  }
+
+  .prose pre :where(span) {
+    color: #1a1a1a !important;
+  }
+}

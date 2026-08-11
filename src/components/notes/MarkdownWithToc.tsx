@@ -52,9 +52,9 @@ export function MarkdownWithToc({ content }: { content: string }) {
   const minLevel = headings.length ? Math.min(...headings.map((h) => h.level)) : 1;
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full print:block print:h-auto">
       {headings.length > 0 && (
-        <aside className="hidden w-56 shrink-0 overflow-y-auto border-r border-border p-4 lg:block">
+        <aside className="hidden w-56 shrink-0 overflow-y-auto border-r border-border p-4 lg:block print:hidden">
           <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Índice
           </p>
@@ -75,9 +75,9 @@ export function MarkdownWithToc({ content }: { content: string }) {
         </aside>
       )}
 
-      <div className="min-w-0 flex-1 overflow-y-auto">
+      <div className="min-w-0 flex-1 overflow-y-auto print:block print:h-auto print:overflow-visible">
         {headings.length > 0 && (
-          <div className="sticky top-0 z-10 border-b border-border bg-background px-4 py-2 sm:px-6 lg:hidden">
+          <div className="sticky top-0 z-10 border-b border-border bg-background px-4 py-2 sm:px-6 lg:hidden print:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">

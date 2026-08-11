@@ -19,5 +19,5 @@ export default function NoteLayout({ children }: { children: React.ReactNode }) 
     return <FullScreenLoader />;
   }
 
-  return <div className="flex h-dvh flex-col">{children}</div>;
+  return <div className="flex h-dvh flex-col print:block print:h-auto">{children}</div>;
 }
