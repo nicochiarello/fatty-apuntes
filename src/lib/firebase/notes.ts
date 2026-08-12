@@ -30,11 +30,28 @@ const PDF_EXTENSIONS = [".pdf"];
 // handle the legacy binary .doc/.ppt formats, so those are deliberately not accepted.
 const DOCX_EXTENSIONS = [".docx"];
 const PPTX_EXTENSIONS = [".pptx"];
-const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"];
+const IMAGE_CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".svg": "image/svg+xml",
+};
+const IMAGE_EXTENSIONS = Object.keys(IMAGE_CONTENT_TYPE_BY_EXTENSION);
 
 export function isImageFile(fileName: string): boolean {
   const lower = fileName.toLowerCase();
   return IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
+
+// The browser-reported File.type is unreliable for some sources (e.g. empty for certain
+// drag sources), and the Storage security rules gate on contentType — so derive it from the
+// extension instead of trusting image.type, same as the primary note file already does.
+function imageContentTypeFor(fileName: string): string {
+  const lower = fileName.toLowerCase();
+  const ext = IMAGE_EXTENSIONS.find((e) => lower.endsWith(e));
+  return ext ? IMAGE_CONTENT_TYPE_BY_EXTENSION[ext] : "application/octet-stream";
 }
 
 // PDFs and Office docs (scanned chapters, slides, embedded images) run much larger than a
@@ -121,7 +138,7 @@ async function uploadImagesAndRewrite(
   for (const image of images) {
     const assetPath = `notes/${yearId}/${subjectId}/${noteId}/assets/${image.name}`;
     const assetRef = ref(storage, assetPath);
-    await uploadBytes(assetRef, image, { contentType: image.type || "application/octet-stream" });
+    await uploadBytes(assetRef, image, { contentType: imageContentTypeFor(image.name) });
     urlByFileName.set(image.name.toLowerCase(), await getDownloadURL(assetRef));
   }
 
