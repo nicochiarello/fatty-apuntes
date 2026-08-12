@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown, ChevronLeft, Download, Pencil } from "lucide-react";
+import { ChevronDown, ChevronLeft, Download, Pencil, Presentation } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { getSubject } from "@/lib/firebase/subjects";
@@ -14,6 +14,7 @@ import type { Note, Subject } from "@/types";
 import { MarkdownWithToc } from "@/components/notes/MarkdownWithToc";
 import { HtmlViewer } from "@/components/notes/HtmlViewer";
 import { PdfViewer } from "@/components/notes/PdfViewer";
+import { DocxViewer } from "@/components/notes/DocxViewer";
 import { EditNoteDialog } from "@/components/notes/EditNoteDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -53,7 +54,9 @@ function NotePageInner() {
   }, [yearId, subjectId, noteId]);
 
   useEffect(() => {
-    if (!note || note.type === "pdf") return;
+    // These render (or don't) straight from note.downloadURL — DocxViewer/PdfViewer do
+    // their own fetching, and pptx has no preview at all — so no need to fetch text here.
+    if (!note || note.type === "pdf" || note.type === "docx" || note.type === "pptx") return;
     fetch(note.downloadURL)
       .then((res) => {
         if (!res.ok) throw new Error("fetch failed");
@@ -196,7 +199,19 @@ function NotePageInner() {
 
         {note && note.type === "pdf" && <PdfViewer url={note.downloadURL} />}
 
-        {note && note.type !== "pdf" && (
+        {note && note.type === "docx" && <DocxViewer url={note.downloadURL} />}
+
+        {note && note.type === "pptx" && (
+          <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-muted-foreground">
+            <Presentation className="size-10" />
+            <p className="max-w-sm text-sm">
+              Los PowerPoint todavía no tienen vista previa — descargalo con el botón de
+              arriba para verlo.
+            </p>
+          </div>
+        )}
+
+        {note && (note.type === "markdown" || note.type === "html") && (
           <>
             {error && (
               <p className="p-6 text-sm text-red-600">

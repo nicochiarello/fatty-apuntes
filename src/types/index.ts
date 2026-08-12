@@ -1,4 +1,4 @@
-export type NoteType = "markdown" | "html" | "pdf";
+export type NoteType = "markdown" | "html" | "pdf" | "docx" | "pptx";
 
 export interface Year {
   id: string;

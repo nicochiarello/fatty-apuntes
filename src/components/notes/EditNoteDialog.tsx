@@ -41,7 +41,7 @@ export function EditNoteDialog({
     const dropped = acceptedFiles[0];
     if (!dropped) return;
     if (!detectNoteType(dropped.name)) {
-      toast.error("Solo se aceptan archivos .md, .html o .pdf");
+      toast.error("Solo se aceptan archivos .md, .html, .pdf, .docx o .pptx");
       return;
     }
     setFile(dropped);
@@ -54,6 +54,8 @@ export function EditNoteDialog({
       "text/markdown": [".md", ".markdown"],
       "text/html": [".html", ".htm"],
       "application/pdf": [".pdf"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
     },
   });
 

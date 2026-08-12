@@ -18,6 +18,8 @@ service firebase.storage {
           (request.resource.contentType == 'application/pdf' && request.resource.size < 25 * 1024 * 1024)
           || (request.resource.contentType.matches('image/.*') && request.resource.size < 10 * 1024 * 1024)
           || (request.resource.contentType.matches('text/markdown|text/html') && request.resource.size < 5 * 1024 * 1024)
+          || (request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' && request.resource.size < 15 * 1024 * 1024)
+          || (request.resource.contentType == 'application/vnd.openxmlformats-officedocument.presentationml.presentation' && request.resource.size < 20 * 1024 * 1024)
         );
       allow delete: if isApproved();
     }

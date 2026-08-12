@@ -26,6 +26,10 @@ const notesCol = collection(db, "notes");
 const MARKDOWN_EXTENSIONS = [".md", ".markdown"];
 const HTML_EXTENSIONS = [".html", ".htm"];
 const PDF_EXTENSIONS = [".pdf"];
+// Only the modern OOXML formats — docx-preview (and our lack of any .ppt viewer) can't
+// handle the legacy binary .doc/.ppt formats, so those are deliberately not accepted.
+const DOCX_EXTENSIONS = [".docx"];
+const PPTX_EXTENSIONS = [".pptx"];
 const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"];
 
 export function isImageFile(fileName: string): boolean {
@@ -33,11 +37,14 @@ export function isImageFile(fileName: string): boolean {
   return IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext));
 }
 
-// PDFs (scanned chapters, slides) run much larger than a markdown/html note in practice.
+// PDFs and Office docs (scanned chapters, slides, embedded images) run much larger than a
+// markdown/html note in practice.
 export const MAX_NOTE_SIZE_BYTES: Record<NoteType, number> = {
   markdown: 5 * 1024 * 1024,
   html: 5 * 1024 * 1024,
   pdf: 25 * 1024 * 1024,
+  docx: 15 * 1024 * 1024,
+  pptx: 20 * 1024 * 1024,
 };
 
 export function detectNoteType(fileName: string): NoteType | null {
@@ -45,13 +52,15 @@ export function detectNoteType(fileName: string): NoteType | null {
   if (MARKDOWN_EXTENSIONS.some((ext) => lower.endsWith(ext))) return "markdown";
   if (HTML_EXTENSIONS.some((ext) => lower.endsWith(ext))) return "html";
   if (PDF_EXTENSIONS.some((ext) => lower.endsWith(ext))) return "pdf";
+  if (DOCX_EXTENSIONS.some((ext) => lower.endsWith(ext))) return "docx";
+  if (PPTX_EXTENSIONS.some((ext) => lower.endsWith(ext))) return "pptx";
   return null;
 }
 
 function assertValidFile(file: File): NoteType {
   const type = detectNoteType(file.name);
   if (!type) {
-    throw new Error("Solo se permiten archivos .md, .html o .pdf");
+    throw new Error("Solo se permiten archivos .md, .html, .pdf, .docx o .pptx");
   }
   const maxSize = MAX_NOTE_SIZE_BYTES[type];
   if (file.size > maxSize) {
@@ -242,8 +251,14 @@ export async function deleteNote(note: Note) {
   });
 }
 
+const CONTENT_TYPE_BY_NOTE_TYPE: Record<NoteType, string> = {
+  markdown: "text/markdown",
+  html: "text/html",
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+};
+
 function contentTypeFor(type: NoteType) {
-  if (type === "markdown") return "text/markdown";
-  if (type === "html") return "text/html";
-  return "application/pdf";
+  return CONTENT_TYPE_BY_NOTE_TYPE[type];
 }

@@ -63,7 +63,9 @@ export function UploadNoteDialog({
       }
 
       if (!primary && droppedImages.length === 0) {
-        toast.error("Solo se aceptan archivos .md, .html, .pdf, o imágenes junto a un .md");
+        toast.error(
+          "Solo se aceptan archivos .md, .html, .pdf, .docx, .pptx, o imágenes junto a un .md",
+        );
       }
     },
     [file],
@@ -76,6 +78,8 @@ export function UploadNoteDialog({
       "text/markdown": [".md", ".markdown"],
       "text/html": [".html", ".htm"],
       "application/pdf": [".pdf"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
       "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"],
     },
   });
@@ -124,8 +128,8 @@ export function UploadNoteDialog({
           <DialogHeader>
             <DialogTitle>Subir apunte</DialogTitle>
             <DialogDescription>
-              Archivos .md o .html (hasta 5MB), o .pdf (hasta 25MB). A un .md le podés
-              arrastrar también sus imágenes.
+              Archivos .md o .html (hasta 5MB), .pdf (hasta 25MB), .docx (hasta 15MB) o
+              .pptx (hasta 20MB). A un .md le podés arrastrar también sus imágenes.
             </DialogDescription>
           </DialogHeader>
 
