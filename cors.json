@@ -5,7 +5,7 @@
       "https://fattyapuntes.firebaseapp.com",
       "http://localhost:3000"
     ],
-    "method": ["GET", "HEAD"],
+    "method": ["GET", "HEAD", "POST", "PUT", "DELETE"],
     "maxAgeSeconds": 3600,
     "responseHeader": ["Content-Type"]
   }
