@@ -26,7 +26,15 @@ function stripExtension(name: string) {
   return name.replace(/\.[^/.]+$/, "");
 }
 
-export function UploadNoteDialog({ yearId, subjectId }: { yearId: string; subjectId: string }) {
+export function UploadNoteDialog({
+  yearId,
+  subjectId,
+  folderId = null,
+}: {
+  yearId: string;
+  subjectId: string;
+  folderId?: string | null;
+}) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -86,7 +94,7 @@ export function UploadNoteDialog({ yearId, subjectId }: { yearId: string; subjec
     if (!user || !file) return;
     setLoading(true);
     try {
-      await uploadNote({ file, images, title, description, yearId, subjectId, user });
+      await uploadNote({ file, images, title, description, yearId, subjectId, folderId, user });
       toast.success("Apunte subido");
       reset();
       setOpen(false);

@@ -1,7 +1,7 @@
 # Fatty Apuntes 📓
 
-Web para alojar los apuntes de la facu del grupo, organizados por **Año → Materia → Apunte**.
-Se sube en Markdown (`.md`) o HTML (`.html`) y se ve renderizado en el navegador, sin descargar nada.
+Web para alojar los apuntes de la facu del grupo, organizados por **Año → Materia → (Carpeta) → Apunte**.
+Se sube en Markdown (`.md`), HTML (`.html`) o PDF, y se ve renderizado en el navegador, sin descargar nada.
 
 Stack: **Next.js** (App Router, exportado como sitio estático) + **Firebase** (Auth con Google, Firestore, Storage, Hosting).
 
@@ -81,15 +81,16 @@ gsutil cors set cors.json gs://tu-proyecto.firebasestorage.app
 
 ## Cómo está organizado
 
-- `src/lib/firebase/` — cliente de Firebase y funciones de lectura/escritura de Firestore/Storage (`years.ts`, `subjects.ts`, `notes.ts`).
+- `src/lib/firebase/` — cliente de Firebase y funciones de lectura/escritura de Firestore/Storage (`years.ts`, `subjects.ts`, `folders.ts`, `notes.ts`).
 - `src/lib/auth/AuthContext.tsx` — contexto de autenticación (Google Sign-In).
-- `src/app/dashboard/` — año → materia, con rutas por query string (`?id=`, `?year=`, `?subject=`) para que sea compatible con el export estático.
+- `src/app/dashboard/` — año → materia → carpeta (opcional), con rutas por query string (`?id=`, `?year=`, `?subject=`) para que sea compatible con el export estático. Las carpetas son solo una etiqueta organizativa: un apunte con `folderId: null` vive "suelto" en la materia.
 - `src/app/note/` — vista del apunte a pantalla completa (sin navbar del dashboard), misma convención de query params.
 - `src/components/` — UI reutilizable (`ui/` primitivos, `years/`, `subjects/`, `notes/`, `layout/`).
 - `firestore.rules` / `storage.rules` — cualquier usuario logueado con Google puede leer y escribir. No hay roles de admin.
 
 ## Limitaciones conocidas / posibles mejoras
 
-- Borrar un año o materia no borra en cascada sus materias/apuntes (quedan huérfanos). Se podría agregar una Cloud Function o limpieza recursiva si molesta.
+- Borrar un año o materia no borra en cascada sus materias/apuntes (quedan huérfanos). Se podría agregar una Cloud Function o limpieza recursiva si molesta. Borrar una carpeta sí está resuelto: sus apuntes se mueven de vuelta a la materia en vez de perderse.
+- No hay forma de mover un apunte ya subido a otra carpeta desde la UI — solo se asigna la carpeta al subirlo (o queda "suelto" si se sube desde la materia).
 - No hay buscador global de apuntes todavía.
 - Todos los usuarios logueados tienen los mismos permisos (crear, subir, borrar cualquier cosa). Si en algún momento querés un rol de admin, es cuestión de agregar un campo `role` en un doc de usuario y chequearlo en `firestore.rules` / `storage.rules`.

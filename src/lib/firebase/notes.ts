@@ -129,6 +129,7 @@ interface UploadNoteInput {
   description: string;
   yearId: string;
   subjectId: string;
+  folderId?: string | null;
   user: User;
 }
 
@@ -139,6 +140,7 @@ export async function uploadNote({
   description,
   yearId,
   subjectId,
+  folderId = null,
   user,
 }: UploadNoteInput) {
   const type = assertValidFile(file);
@@ -160,6 +162,7 @@ export async function uploadNote({
   const note: Omit<Note, "id"> = {
     yearId,
     subjectId,
+    folderId,
     title: title.trim() || file.name,
     description: description.trim(),
     type,

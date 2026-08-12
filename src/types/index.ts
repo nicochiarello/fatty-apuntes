@@ -19,10 +19,21 @@ export interface Subject {
   createdAt: number;
 }
 
+export interface Folder {
+  id: string;
+  yearId: string;
+  subjectId: string;
+  name: string;
+  order: number;
+  createdBy: string;
+  createdAt: number;
+}
+
 export interface Note {
   id: string;
   yearId: string;
   subjectId: string;
+  folderId: string | null;
   title: string;
   description: string;
   type: NoteType;

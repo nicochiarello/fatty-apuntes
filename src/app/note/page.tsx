@@ -96,7 +96,9 @@ function NotePageInner() {
     }
   };
 
-  const backHref = `/dashboard/subject?year=${yearId}&id=${subjectId}`;
+  const backHref = note?.folderId
+    ? `/dashboard/folder?year=${yearId}&subject=${subjectId}&id=${note.folderId}`
+    : `/dashboard/subject?year=${yearId}&id=${subjectId}`;
 
   return (
     <>
