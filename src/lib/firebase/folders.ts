@@ -18,9 +18,19 @@ const foldersCol = collection(db, "folders");
 
 export function subscribeFolders(subjectId: string, callback: (folders: Folder[]) => void) {
   const q = query(foldersCol, where("subjectId", "==", subjectId), orderBy("order", "asc"));
-  return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Folder));
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      callback(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Folder));
+    },
+    (error) => {
+      // Without this, a query error (e.g. a composite index still building) leaves the
+      // caller's state stuck at its initial value forever — an infinite loading spinner
+      // with nothing in the console to explain why.
+      console.error("subscribeFolders error:", error);
+      callback([]);
+    },
+  );
 }
 
 export async function getFolder(folderId: string): Promise<Folder | null> {

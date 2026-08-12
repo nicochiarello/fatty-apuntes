@@ -79,9 +79,16 @@ export async function downloadNote(note: Note) {
 
 export function subscribeNotes(subjectId: string, callback: (notes: Note[]) => void) {
   const q = query(notesCol, where("subjectId", "==", subjectId), orderBy("createdAt", "desc"));
-  return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Note));
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      callback(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Note));
+    },
+    (error) => {
+      console.error("subscribeNotes error:", error);
+      callback([]);
+    },
+  );
 }
 
 export async function getNote(noteId: string): Promise<Note | null> {

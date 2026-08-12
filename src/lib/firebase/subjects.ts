@@ -18,9 +18,16 @@ const subjectsCol = collection(db, "subjects");
 
 export function subscribeSubjects(yearId: string, callback: (subjects: Subject[]) => void) {
   const q = query(subjectsCol, where("yearId", "==", yearId), orderBy("order", "asc"));
-  return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Subject));
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      callback(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Subject));
+    },
+    (error) => {
+      console.error("subscribeSubjects error:", error);
+      callback([]);
+    },
+  );
 }
 
 export async function getSubject(subjectId: string): Promise<Subject | null> {

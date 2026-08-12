@@ -15,9 +15,16 @@ const yearsCol = collection(db, "years");
 
 export function subscribeYears(callback: (years: Year[]) => void) {
   const q = query(yearsCol, orderBy("order", "asc"));
-  return onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Year));
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      callback(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Year));
+    },
+    (error) => {
+      console.error("subscribeYears error:", error);
+      callback([]);
+    },
+  );
 }
 
 export async function getYear(yearId: string): Promise<Year | null> {
