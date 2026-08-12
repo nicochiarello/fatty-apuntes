@@ -2,10 +2,10 @@
 
 import { useCallback, useState, type FormEvent } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, UploadCloud, X } from "lucide-react";
+import { ImageIcon, Upload, UploadCloud, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { detectNoteType, uploadNote } from "@/lib/firebase/notes";
+import { detectNoteType, isImageFile, uploadNote } from "@/lib/firebase/notes";
 import { NOTE_TYPE_META } from "@/lib/noteTypeMeta";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,33 +30,53 @@ export function UploadNoteDialog({ yearId, subjectId }: { yearId: string; subjec
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [images, setImages] = useState<File[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const dropped = acceptedFiles[0];
-    if (!dropped) return;
-    if (!detectNoteType(dropped.name)) {
-      toast.error("Solo se aceptan archivos .md, .html o .pdf");
-      return;
-    }
-    setFile(dropped);
-    setTitle((current) => current || stripExtension(dropped.name));
-  }, []);
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      const primary = acceptedFiles.find((f) => detectNoteType(f.name));
+      const droppedImages = acceptedFiles.filter((f) => isImageFile(f.name));
+      const nextFile = primary ?? file;
+
+      if (primary) {
+        setFile(primary);
+        setTitle((current) => current || stripExtension(primary.name));
+      }
+
+      if (droppedImages.length > 0) {
+        if (nextFile && detectNoteType(nextFile.name) === "markdown") {
+          setImages((current) => [...current, ...droppedImages]);
+        } else {
+          toast.error("Las imágenes solo se pueden adjuntar a un apunte en Markdown");
+        }
+      }
+
+      if (!primary && droppedImages.length === 0) {
+        toast.error("Solo se aceptan archivos .md, .html, .pdf, o imágenes junto a un .md");
+      }
+    },
+    [file],
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    multiple: false,
+    multiple: true,
     accept: {
       "text/markdown": [".md", ".markdown"],
       "text/html": [".html", ".htm"],
       "application/pdf": [".pdf"],
+      "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"],
     },
   });
 
+  const isMarkdown = file ? detectNoteType(file.name) === "markdown" : false;
+
   const reset = () => {
     setFile(null);
+    setImages([]);
     setTitle("");
     setDescription("");
   };
@@ -66,7 +86,7 @@ export function UploadNoteDialog({ yearId, subjectId }: { yearId: string; subjec
     if (!user || !file) return;
     setLoading(true);
     try {
-      await uploadNote({ file, title, description, yearId, subjectId, user });
+      await uploadNote({ file, images, title, description, yearId, subjectId, user });
       toast.success("Apunte subido");
       reset();
       setOpen(false);
@@ -95,7 +115,10 @@ export function UploadNoteDialog({ yearId, subjectId }: { yearId: string; subjec
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Subir apunte</DialogTitle>
-            <DialogDescription>Archivos .md o .html (hasta 5MB), o .pdf (hasta 25MB).</DialogDescription>
+            <DialogDescription>
+              Archivos .md o .html (hasta 5MB), o .pdf (hasta 25MB). A un .md le podés
+              arrastrar también sus imágenes.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="mt-4 flex flex-col gap-4">
@@ -115,11 +138,17 @@ export function UploadNoteDialog({ yearId, subjectId }: { yearId: string; subjec
                     return <Icon className="size-6 text-primary" />;
                   })()}
                   <p className="text-sm font-medium">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isMarkdown
+                      ? "Arrastrá más archivos para agregar imágenes, o…"
+                      : "Arrastrá otro archivo para reemplazarlo, o…"}
+                  </p>
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setFile(null);
+                      setImages([]);
                     }}
                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-600"
                   >
@@ -135,6 +164,28 @@ export function UploadNoteDialog({ yearId, subjectId }: { yearId: string; subjec
                 </>
               )}
             </div>
+
+            {isMarkdown && images.length > 0 && (
+              <ul className="flex flex-col gap-1.5">
+                {images.map((image, index) => (
+                  <li
+                    key={`${image.name}-${index}`}
+                    className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm"
+                  >
+                    <ImageIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate">{image.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setImages((current) => current.filter((_, i) => i !== index))}
+                      className="shrink-0 text-muted-foreground hover:text-red-600"
+                      aria-label={`Quitar ${image.name}`}
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="note-title">Título</Label>

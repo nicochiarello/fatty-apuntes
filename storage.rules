@@ -2,13 +2,15 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    match /notes/{yearId}/{subjectId}/{noteId}/{fileName} {
+    // {allPaths=**} also covers markdown image attachments uploaded under
+    // notes/{yearId}/{subjectId}/{noteId}/assets/{fileName}.
+    match /notes/{yearId}/{subjectId}/{noteId}/{allPaths=**} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
-        && request.resource.contentType.matches('text/markdown|text/html|application/pdf')
         && (
           (request.resource.contentType == 'application/pdf' && request.resource.size < 25 * 1024 * 1024)
-          || (request.resource.contentType != 'application/pdf' && request.resource.size < 5 * 1024 * 1024)
+          || (request.resource.contentType.matches('image/.*') && request.resource.size < 10 * 1024 * 1024)
+          || (request.resource.contentType.matches('text/markdown|text/html') && request.resource.size < 5 * 1024 * 1024)
         );
       allow delete: if request.auth != null;
     }

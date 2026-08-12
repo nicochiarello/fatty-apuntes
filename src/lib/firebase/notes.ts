@@ -13,6 +13,7 @@ import {
 import {
   deleteObject,
   getDownloadURL,
+  listAll,
   ref,
   uploadBytes,
 } from "firebase/storage";
@@ -25,6 +26,12 @@ const notesCol = collection(db, "notes");
 const MARKDOWN_EXTENSIONS = [".md", ".markdown"];
 const HTML_EXTENSIONS = [".html", ".htm"];
 const PDF_EXTENSIONS = [".pdf"];
+const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"];
+
+export function isImageFile(fileName: string): boolean {
+  const lower = fileName.toLowerCase();
+  return IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
 
 // PDFs (scanned chapters, slides) run much larger than a markdown/html note in practice.
 export const MAX_NOTE_SIZE_BYTES: Record<NoteType, number> = {
@@ -82,8 +89,42 @@ export async function getNote(noteId: string): Promise<Note | null> {
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as Note) : null;
 }
 
+// Uploads each attached image under the note's assets/ folder, then rewrites the
+// markdown's image references (![alt](path) and <img src="path">) from local/relative
+// paths to the resulting Storage URLs, matching by filename. Uploaded markdown otherwise
+// has no way to reference images since only the .md text itself gets stored.
+async function uploadImagesAndRewrite(
+  text: string,
+  images: File[],
+  yearId: string,
+  subjectId: string,
+  noteId: string,
+): Promise<string> {
+  const urlByFileName = new Map<string, string>();
+
+  for (const image of images) {
+    const assetPath = `notes/${yearId}/${subjectId}/${noteId}/assets/${image.name}`;
+    const assetRef = ref(storage, assetPath);
+    await uploadBytes(assetRef, image, { contentType: image.type || "application/octet-stream" });
+    urlByFileName.set(image.name.toLowerCase(), await getDownloadURL(assetRef));
+  }
+
+  const resolve = (path: string) => urlByFileName.get(path.split("/").pop()?.toLowerCase() ?? "");
+
+  return text
+    .replace(/!\[([^\]]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)/g, (match, alt, path, title) => {
+      const url = resolve(path);
+      return url ? `![${alt}](${url}${title})` : match;
+    })
+    .replace(/(<img[^>]*\ssrc=["'])([^"']+)(["'][^>]*>)/gi, (match, pre, path, post) => {
+      const url = resolve(path);
+      return url ? `${pre}${url}${post}` : match;
+    });
+}
+
 interface UploadNoteInput {
   file: File;
+  images?: File[];
   title: string;
   description: string;
   yearId: string;
@@ -93,6 +134,7 @@ interface UploadNoteInput {
 
 export async function uploadNote({
   file,
+  images = [],
   title,
   description,
   yearId,
@@ -105,7 +147,14 @@ export async function uploadNote({
   const storagePath = `notes/${yearId}/${subjectId}/${noteRef.id}/${file.name}`;
   const storageRef = ref(storage, storagePath);
 
-  await uploadBytes(storageRef, file, { contentType: contentTypeFor(type) });
+  let body: File | Blob = file;
+  if (type === "markdown" && images.length > 0) {
+    const text = await file.text();
+    const rewritten = await uploadImagesAndRewrite(text, images, yearId, subjectId, noteRef.id);
+    body = new Blob([rewritten], { type: "text/markdown" });
+  }
+
+  await uploadBytes(storageRef, body, { contentType: contentTypeFor(type) });
   const downloadURL = await getDownloadURL(storageRef);
 
   const note: Omit<Note, "id"> = {
@@ -162,10 +211,24 @@ export async function updateNote({ note, title, description, file }: UpdateNoteI
   await updateDoc(doc(db, "notes", note.id), updates);
 }
 
+// listAll only lists a folder's immediate children, so the assets/ subfolder (image
+// attachments) needs its own recursive pass to actually get deleted.
+async function deleteStorageFolder(folderRef: ReturnType<typeof ref>): Promise<void> {
+  const { items, prefixes } = await listAll(folderRef);
+  await Promise.all([
+    ...items.map((item) => deleteObject(item).catch(() => {})),
+    ...prefixes.map((prefix) => deleteStorageFolder(prefix)),
+  ]);
+}
+
 export async function deleteNote(note: Note) {
   await deleteDoc(doc(db, "notes", note.id));
-  await deleteObject(ref(storage, note.storagePath)).catch(() => {
-    // El archivo puede ya no existir en Storage; ignoramos el error.
+
+  // Deletes the whole notes/{yearId}/{subjectId}/{noteId}/ folder — the primary file plus
+  // any image assets uploaded alongside a markdown note — not just the primary file.
+  const folderRef = ref(storage, `notes/${note.yearId}/${note.subjectId}/${note.id}`);
+  await deleteStorageFolder(folderRef).catch(() => {
+    // La carpeta puede ya no existir en Storage; ignoramos el error.
   });
 }
 
