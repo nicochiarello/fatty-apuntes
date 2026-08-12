@@ -5,14 +5,21 @@ service firebase.storage {
     // {allPaths=**} also covers markdown image attachments uploaded under
     // notes/{yearId}/{subjectId}/{noteId}/assets/{fileName}.
     match /notes/{yearId}/{subjectId}/{noteId}/{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
+      // Cross-references the same users/{uid}.status flag firestore.rules checks, so a
+      // "pending" account can't read/write note files by hitting Storage directly either.
+      function isApproved() {
+        return request.auth != null &&
+          firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.status == 'approved';
+      }
+
+      allow read: if isApproved();
+      allow write: if isApproved()
         && (
           (request.resource.contentType == 'application/pdf' && request.resource.size < 25 * 1024 * 1024)
           || (request.resource.contentType.matches('image/.*') && request.resource.size < 10 * 1024 * 1024)
           || (request.resource.contentType.matches('text/markdown|text/html') && request.resource.size < 5 * 1024 * 1024)
         );
-      allow delete: if request.auth != null;
+      allow delete: if isApproved();
     }
   }
 }

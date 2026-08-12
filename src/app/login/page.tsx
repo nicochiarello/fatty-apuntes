@@ -9,14 +9,13 @@ import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function LoginPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, approvalStatus } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && user) {
-      router.replace("/dashboard");
-    }
-  }, [loading, user, router]);
+    if (loading || !user || approvalStatus === null) return;
+    router.replace(approvalStatus === "approved" ? "/dashboard" : "/pending");
+  }, [loading, user, approvalStatus, router]);
 
   // loading covers both the initial auth check and, after coming back from Google's
   // redirect, the few seconds it takes to resolve the sign-in — without this the login

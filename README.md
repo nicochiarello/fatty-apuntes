@@ -47,6 +47,8 @@ npm run dev
 
 Con `NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true` en tu `.env.local` (ya viene así), la app se conecta automáticamente a los emuladores en vez de a Firebase real. Abrí [http://localhost:3000](http://localhost:3000), iniciá sesión (el emulador te deja elegir/crear un usuario de prueba, sin cuenta de Google real), creá un año, una materia, y subí un apunte de prueba. Los datos de los emuladores son descartables y no tocan tu base de datos real; podés ver/inspeccionarlos en la UI del emulador en [http://localhost:4000](http://localhost:4000).
 
+Como cualquier cuenta nueva queda "pendiente" (ver más abajo), al loguearte en el emulador por primera vez también vas a quedar pendiente ahí — abrí la UI del emulador → Firestore → colección `users` → tu documento → cambiá `status` a `"approved"` a mano, igual que harías en producción.
+
 Para probar contra el proyecto real de Firebase (por ejemplo antes de desplegar), poné `NEXT_PUBLIC_USE_FIREBASE_EMULATORS=false` — pero el login con Google en ese modo solo anda bien una vez desplegado (ver paso 4), no en `localhost`.
 
 ## 4. Desplegar a Firebase Hosting
@@ -68,6 +70,16 @@ firebase deploy --only hosting
 
 Una vez desplegado, andá a **Authentication → Settings → Authorized domains** en la consola de Firebase y agregá el dominio de Hosting (`tu-proyecto.web.app`) para que el login con Google funcione en producción.
 
+### Aprobar cuentas nuevas
+
+Cualquiera con una cuenta de Google puede iniciar sesión, pero queda en estado **pendiente** hasta que se lo apruebe a mano — así solo entra el grupo, aunque alguien más se cruce con el link. Para aprobar a alguien:
+
+1. Andá a **Firestore Database** en la consola de Firebase → colección `users`.
+2. Buscá su documento (se identifica por `email`) y cambiá el campo `status` de `"pending"` a `"approved"`.
+3. Esa persona entra sola, sin recargar ni volver a loguearse — el chequeo es en tiempo real.
+
+Esto también aplica a tu propia cuenta la primera vez que entrás: te vas a quedar en "pendiente" hasta que te apruebes a vos mismo de la misma forma. La restricción está tanto en la UI como en `firestore.rules`/`storage.rules` (un usuario pendiente no puede leer ni escribir nada aunque intente saltarse la app).
+
 ### CORS en el bucket de Storage
 
 Los apuntes (Markdown/HTML) se leen con `fetch()` para renderizarlos, y eso requiere que el bucket de Storage tenga CORS habilitado para el dominio de la app — si no, el navegador bloquea la lectura con un error de CORS (aunque el link directo al archivo funcione). Se configura una sola vez con el [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (`gcloud`/`gsutil`):
@@ -86,7 +98,7 @@ gsutil cors set cors.json gs://tu-proyecto.firebasestorage.app
 - `src/app/dashboard/` — año → materia → carpeta (opcional), con rutas por query string (`?id=`, `?year=`, `?subject=`) para que sea compatible con el export estático. Las carpetas son solo una etiqueta organizativa: un apunte con `folderId: null` vive "suelto" en la materia.
 - `src/app/note/` — vista del apunte a pantalla completa (sin navbar del dashboard), misma convención de query params.
 - `src/components/` — UI reutilizable (`ui/` primitivos, `years/`, `subjects/`, `notes/`, `layout/`).
-- `firestore.rules` / `storage.rules` — cualquier usuario logueado con Google puede leer y escribir. No hay roles de admin.
+- `firestore.rules` / `storage.rules` — cualquier usuario con `users/{uid}.status == "approved"` puede leer y escribir; nadie más (ver "Aprobar cuentas nuevas" arriba). No hay roles de admin más allá de eso.
 
 ## Limitaciones conocidas / posibles mejoras
 

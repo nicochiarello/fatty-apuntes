@@ -6,20 +6,36 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // New Google accounts create their own users/{uid} doc as "pending" on first sign-in;
+    // only someone editing it directly in the Firestore console can flip it to "approved"
+    // (see allow update below — the app itself never gets write access to that field).
+    function isApproved() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved';
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && request.auth.uid == userId
+        && request.resource.data.status == 'pending';
+      allow update, delete: if false;
+    }
+
     match /years/{yearId} {
-      allow read, write: if signedIn();
+      allow read, write: if isApproved();
     }
 
     match /subjects/{subjectId} {
-      allow read, write: if signedIn();
+      allow read, write: if isApproved();
     }
 
     match /folders/{folderId} {
-      allow read, write: if signedIn();
+      allow read, write: if isApproved();
     }
 
     match /notes/{noteId} {
-      allow read, write: if signedIn();
+      allow read, write: if isApproved();
     }
   }
 }

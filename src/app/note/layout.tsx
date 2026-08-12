@@ -6,16 +6,19 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 
 export default function NoteLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, approvalStatus } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.replace("/login");
+    } else if (approvalStatus !== null && approvalStatus !== "approved") {
+      router.replace("/pending");
     }
-  }, [loading, user, router]);
+  }, [loading, user, approvalStatus, router]);
 
-  if (loading || !user) {
+  if (loading || !user || approvalStatus !== "approved") {
     return <FullScreenLoader />;
   }
 

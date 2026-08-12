@@ -28,14 +28,13 @@ const FEATURES = [
 ];
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, loading, approvalStatus } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && user) {
-      router.replace("/dashboard");
-    }
-  }, [loading, user, router]);
+    if (loading || !user || approvalStatus === null) return;
+    router.replace(approvalStatus === "approved" ? "/dashboard" : "/pending");
+  }, [loading, user, approvalStatus, router]);
 
   // Covers the initial auth check and, after returning from Google's redirect, the few
   // seconds it takes to resolve sign-in — otherwise the landing page would flash back up
