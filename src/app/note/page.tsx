@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { getSubject } from "@/lib/firebase/subjects";
 import { getNote, downloadNote } from "@/lib/firebase/notes";
+import { downloadMarkdownAsPdf } from "@/lib/markdownPdf";
 import { NOTE_TYPE_META } from "@/lib/noteTypeMeta";
 import type { Note, Subject } from "@/types";
 import { MarkdownWithToc } from "@/components/notes/MarkdownWithToc";
@@ -64,7 +65,6 @@ function NotePageInner() {
 
   useEffect(() => {
     if (!note) return;
-    // Browsers suggest document.title as the filename when saving a print job as PDF.
     document.title = note.title;
     return () => {
       document.title = "Fatty Apuntes";
@@ -83,9 +83,17 @@ function NotePageInner() {
     }
   };
 
-  const handleDownloadPdf = () => {
-    toast.info('Elegí "Guardar como PDF" en el diálogo de impresión');
-    window.print();
+  const handleDownloadPdf = async () => {
+    if (!note || content === null) return;
+    setDownloading(true);
+    try {
+      const filename = `${note.title.replace(/[/\\]/g, "-")}.pdf`;
+      await downloadMarkdownAsPdf(content, filename);
+    } catch {
+      toast.error("No pudimos generar el PDF");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const backHref = `/dashboard/subject?year=${yearId}&id=${subjectId}`;
