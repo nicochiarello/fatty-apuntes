@@ -14,6 +14,28 @@ const SCROLL_FIX_STYLES = `
 </style>
 `;
 
+// srcDoc iframes resolve relative/fragment-only hrefs (href="#intro") against the *parent*
+// page's URL, but the iframe's own document identity is the opaque `about:srcdoc` — so the
+// browser doesn't treat a same-page anchor click as a same-document scroll. It sees it as a
+// real navigation to "parent-url#intro" and reloads the whole app inside the iframe (which
+// then fails: the sandbox blocks it from loading our JS chunks). Intercepting hash-only
+// clicks and scrolling manually sidesteps that resolution entirely.
+const ANCHOR_SCROLL_FIX_SCRIPT = `
+<script>
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var id = a.getAttribute("href").slice(1);
+    if (!id) return;
+    var el = document.getElementById(id) || document.getElementsByName(id)[0];
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+</script>
+`;
+
 // allow-scripts alone (no allow-same-origin) still gives the frame a real, working
 // document — it just can't read this app's cookies/storage/Firebase session, since it
 // stays on a unique opaque origin. That's enough isolation for notes uploaded by the
@@ -30,7 +52,7 @@ const SANDBOX =
 export function HtmlViewer({ content }: { content: string }) {
   return (
     <iframe
-      srcDoc={content + SCROLL_FIX_STYLES}
+      srcDoc={content + SCROLL_FIX_STYLES + ANCHOR_SCROLL_FIX_SCRIPT}
       sandbox={SANDBOX}
       title="Contenido del apunte"
       className="h-full w-full bg-white"
