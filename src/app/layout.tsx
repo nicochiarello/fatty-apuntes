@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/lib/auth/AuthContext";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 // Self-hosted instead of next/font/google: Turbopack's Google Fonts fetch at build time
@@ -25,6 +26,15 @@ const baloo = localFont({
 export const metadata: Metadata = {
   title: "Fatty Apuntes",
   description: "Apuntes de la facu, organizados por año y materia.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Fatty Apuntes",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#e8792c",
 };
 
 export default function RootLayout({
@@ -38,6 +48,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster richColors position="top-right" />
+          <ServiceWorkerRegister />
         </AuthProvider>
       </body>
     </html>
