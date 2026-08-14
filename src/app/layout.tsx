@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/lib/auth/AuthContext";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 // Self-hosted instead of next/font/google: Turbopack's Google Fonts fetch at build time
@@ -43,7 +44,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        {/* Runs before paint so a saved dark theme is applied to the very first frame;
+            anything React does happens after the page is already on screen. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className={`${inter.variable} ${baloo.variable} antialiased`}>
         <AuthProvider>
           {children}

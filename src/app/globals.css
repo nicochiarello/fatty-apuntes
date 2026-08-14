@@ -1,7 +1,15 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Theme has three states. With no data-theme attribute the app follows the operating
+   system, which is what it always did and is still the default; data-theme="light" or
+   "dark" is an explicit choice from the account menu and overrides the system in both
+   directions. The dark palette is written out twice on purpose — a media query cannot be
+   combined into one selector list with a plain attribute selector, and `light-dark()`
+   would collapse it into one block at the cost of breaking outright on older phones
+   instead of degrading. */
 :root {
+  color-scheme: light;
   --background: #fdf8f0;
   --foreground: #2b2018;
   --card: #ffffff;
@@ -17,7 +25,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --background: #211a12;
     --foreground: #f6ecdd;
     --card: #2a2118;
@@ -31,6 +40,22 @@
     --accent-foreground: #0d211a;
     --ring: #f2954a;
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #211a12;
+  --foreground: #f6ecdd;
+  --card: #2a2118;
+  --card-foreground: #f6ecdd;
+  --muted: #362b1e;
+  --muted-foreground: #c2b09b;
+  --border: #40331f;
+  --primary: #f2954a;
+  --primary-foreground: #24170a;
+  --accent: #4bb08a;
+  --accent-foreground: #0d211a;
+  --ring: #f2954a;
 }
 
 @theme inline {
