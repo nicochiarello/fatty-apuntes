@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { APP_VERSION } from "@/lib/version";
 import { Logo } from "@/components/layout/Logo";
+import { NotificationsToggle } from "@/components/layout/NotificationsToggle";
 import { InstallAppButton } from "@/components/layout/InstallAppButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -50,6 +51,11 @@ export function Navbar() {
                   {user.displayName ?? user.email}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {/* Not a DropdownMenuItem: selecting one closes the menu, and the toggle
+                    needs to stay put to show its own busy and result states. */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <NotificationsToggle />
+                </div>
                 <DropdownMenuItem onSelect={handleLogOut} className="text-red-600">
                   <LogOut className="size-4" />
                   Cerrar sesión

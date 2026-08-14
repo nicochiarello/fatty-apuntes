@@ -44,4 +44,11 @@ export interface Note {
   authorPhotoURL: string | null;
   createdAt: number;
   size: number;
+  /**
+   * True between "Escribir apunte" creating the document and its first save. The note
+   * exists from the start only so pasted images have somewhere to upload to, so it must
+   * not be announced yet — nobody wants a notification for an empty note. Absent on notes
+   * created before this field existed, which reads as published.
+   */
+  draft?: boolean;
 }

@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Cloud Functions are a separate Node codebase with their own package.json and
+    // CommonJS conventions; the Next/browser rules here do not apply to them.
+    "functions/**",
   ]),
 ]);
 

@@ -210,6 +210,7 @@ export async function uploadNote({
     authorPhotoURL: user.photoURL,
     createdAt: Date.now(),
     size: file.size,
+    draft: false,
   };
 
   await setDoc(noteRef, note);
@@ -272,6 +273,8 @@ export async function createMarkdownNote({
     authorPhotoURL: user.photoURL,
     createdAt: Date.now(),
     size: body.size,
+    // Announced only once it is first saved with actual content — see updateNoteContent.
+    draft: true,
   };
 
   await setDoc(noteRef, note);
@@ -303,7 +306,9 @@ export async function updateNoteContent(
   await uploadBytes(storageRef, body, { contentType: "text/markdown" });
   const downloadURL = await getDownloadURL(storageRef);
 
-  await updateDoc(doc(db, "notes", note.id), { downloadURL, size: body.size });
+  // Clearing draft here is what publishes a note written in the editor, and is the signal
+  // the notification trigger watches for.
+  await updateDoc(doc(db, "notes", note.id), { downloadURL, size: body.size, draft: false });
 
   return { downloadURL, size: body.size };
 }
