@@ -21,7 +21,15 @@ function createFirebaseServices() {
   const db = getFirestore(app);
   const storage = getStorage(app);
 
-  if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true") {
+  // NODE_ENV is checked as well as the flag, and deliberately first: `next build` also
+  // loads .env.local, so a developer's emulator flag would otherwise be compiled straight
+  // into the production bundle and point the deployed app at localhost — which fails in a
+  // way that looks like an auth problem (everyone suddenly "not approved") rather than a
+  // misconfiguration. The flag alone is not safe to trust at build time.
+  if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true"
+  ) {
     // Guarded because Next.js Fast Refresh can re-run this module while the singleton
     // Firebase app instance survives, and connecting an emulator twice throws.
     // Must match the hostname the app itself is served on ("localhost"), not "127.0.0.1" —
