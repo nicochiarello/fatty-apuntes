@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown, ChevronLeft, Download, Pencil, Presentation } from "lucide-react";
+import { ChevronDown, ChevronLeft, Download, Pencil, PenLine, Presentation } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { getSubject } from "@/lib/firebase/subjects";
@@ -12,6 +12,7 @@ import { downloadMarkdownAsPdf } from "@/lib/markdownPdf";
 import { NOTE_TYPE_META } from "@/lib/noteTypeMeta";
 import type { Note, Subject } from "@/types";
 import { MarkdownWithToc } from "@/components/notes/MarkdownWithToc";
+import { MarkdownEditor } from "@/components/notes/MarkdownEditor";
 import { HtmlViewer } from "@/components/notes/HtmlViewer";
 import { PdfViewer } from "@/components/notes/PdfViewer";
 import { DocxViewer } from "@/components/notes/DocxViewer";
@@ -39,6 +40,13 @@ function NotePageInner() {
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  // NewNoteDialog lands here with ?edit=1 so a freshly created note opens straight in the
+  // editor. Kept derived rather than seeded into useState: the prerendered HTML has no
+  // query string, so an initial-state read would miss the flag and never recover.
+  // `setEditing` overrides it once the reader opens or closes the editor by hand.
+  const [editRequest, setEditRequest] = useState<boolean | null>(null);
+  const editing = editRequest ?? searchParams.get("edit") === "1";
+  const setEditing = setEditRequest;
 
   const refreshNote = () => {
     if (!noteId) return;
@@ -123,17 +131,32 @@ function NotePageInner() {
               {NOTE_TYPE_META[note.type].label}
             </Badge>
             <div className="ml-auto flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-              <EditNoteDialog
-                note={note}
-                onUpdated={refreshNote}
-                trigger={
-                  <Button variant="ghost" size="sm" className="h-8 px-2.5">
-                    <Pencil className="size-4" />
-                    <span className="hidden sm:inline">Editar</span>
-                  </Button>
-                }
-              />
-              {note.type === "markdown" ? (
+              {note.type === "markdown" && !editing && content !== null && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditing(true)}
+                  className="h-8 px-2.5"
+                >
+                  <PenLine className="size-4" />
+                  <span className="hidden sm:inline">Editar texto</span>
+                </Button>
+              )}
+              {/* Replacing the file or downloading it mid-edit would race the editor's own
+                  save against Storage, so those actions step aside while editing. */}
+              {!editing && (
+                <EditNoteDialog
+                  note={note}
+                  onUpdated={refreshNote}
+                  trigger={
+                    <Button variant="ghost" size="sm" className="h-8 px-2.5">
+                      <Pencil className="size-4" />
+                      <span className="hidden sm:inline">Detalles</span>
+                    </Button>
+                  }
+                />
+              )}
+              {editing ? null : note.type === "markdown" ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" disabled={downloading} className="h-8 px-2.5">
@@ -225,8 +248,20 @@ function NotePageInner() {
               </div>
             )}
 
-            {!error && content !== null && note.type === "markdown" && (
+            {!error && content !== null && note.type === "markdown" && !editing && (
               <MarkdownWithToc content={content} />
+            )}
+
+            {!error && content !== null && note.type === "markdown" && editing && (
+              <MarkdownEditor
+                note={note}
+                initialContent={content}
+                onSaved={(saved, updated) => {
+                  setContent(saved);
+                  setNote(updated);
+                }}
+                onClose={() => setEditing(false)}
+              />
             )}
 
             {!error && content !== null && note.type === "html" && (

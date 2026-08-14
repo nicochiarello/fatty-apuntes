@@ -11,6 +11,7 @@ import { subscribeNotes, deleteNote } from "@/lib/firebase/notes";
 import type { Folder, Note, Subject, Year } from "@/types";
 import { NoteCard } from "@/components/notes/NoteCard";
 import { UploadNoteDialog } from "@/components/notes/UploadNoteDialog";
+import { NewNoteDialog } from "@/components/notes/NewNoteDialog";
 import { EmptyState } from "@/components/layout/EmptyState";
 import { ConfirmDialog } from "@/components/layout/ConfirmDialog";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -57,7 +58,10 @@ function FolderPageInner() {
             {subject ? `Carpeta dentro de ${subject.name}` : "Apuntes de la carpeta."}
           </p>
         </div>
-        <UploadNoteDialog yearId={yearId} subjectId={subjectId} folderId={folderId} />
+        <div className="flex shrink-0 items-center gap-2">
+          <NewNoteDialog yearId={yearId} subjectId={subjectId} folderId={folderId} />
+          <UploadNoteDialog yearId={yearId} subjectId={subjectId} folderId={folderId} />
+        </div>
       </div>
 
       {folder === null && (
@@ -77,7 +81,12 @@ function FolderPageInner() {
           icon={FileText}
           title="Todavía no hay apuntes en esta carpeta"
           description="Subí el primer apunte para esta carpeta."
-          action={<UploadNoteDialog yearId={yearId} subjectId={subjectId} folderId={folderId} />}
+          action={
+            <div className="flex items-center gap-2">
+              <NewNoteDialog yearId={yearId} subjectId={subjectId} folderId={folderId} />
+              <UploadNoteDialog yearId={yearId} subjectId={subjectId} folderId={folderId} />
+            </div>
+          }
         />
       )}
 

@@ -54,6 +54,10 @@ function imageContentTypeFor(fileName: string): string {
   return ext ? IMAGE_CONTENT_TYPE_BY_EXTENSION[ext] : "application/octet-stream";
 }
 
+// Mirrors the image ceiling in storage.rules — checked here too so a too-large paste fails
+// with a readable message instead of an opaque permission error.
+export const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+
 // PDFs and Office docs (scanned chapters, slides, embedded images) run much larger than a
 // markdown/html note in practice.
 export const MAX_NOTE_SIZE_BYTES: Record<NoteType, number> = {
@@ -211,6 +215,128 @@ export async function uploadNote({
   await setDoc(noteRef, note);
 
   return noteRef.id;
+}
+
+function markdownFileName(title: string): string {
+  const slug = title
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return `${slug || "apunte"}.md`;
+}
+
+interface CreateMarkdownNoteInput {
+  title: string;
+  description: string;
+  yearId: string;
+  subjectId: string;
+  folderId?: string | null;
+  user: User;
+}
+
+/**
+ * Creates an empty markdown note up front so the editor has a real noteId to hang image
+ * attachments off of (they live under the note's assets/ folder, same as uploaded ones).
+ */
+export async function createMarkdownNote({
+  title,
+  description,
+  yearId,
+  subjectId,
+  folderId = null,
+  user,
+}: CreateMarkdownNoteInput): Promise<string> {
+  const cleanTitle = title.trim() || "Apunte sin título";
+  const noteRef = doc(notesCol);
+  const storagePath = `notes/${yearId}/${subjectId}/${noteRef.id}/${markdownFileName(cleanTitle)}`;
+  const storageRef = ref(storage, storagePath);
+
+  const body = new Blob([`# ${cleanTitle}\n\n`], { type: "text/markdown" });
+  await uploadBytes(storageRef, body, { contentType: "text/markdown" });
+  const downloadURL = await getDownloadURL(storageRef);
+
+  const note: Omit<Note, "id"> = {
+    yearId,
+    subjectId,
+    folderId,
+    title: cleanTitle,
+    description: description.trim(),
+    type: "markdown",
+    storagePath,
+    downloadURL,
+    authorId: user.uid,
+    authorName: user.displayName ?? "Anónimo",
+    authorPhotoURL: user.photoURL,
+    createdAt: Date.now(),
+    size: body.size,
+  };
+
+  await setDoc(noteRef, note);
+
+  return noteRef.id;
+}
+
+/**
+ * Overwrites a markdown note's file in place. Re-uploading to the same path mints a fresh
+ * download token, so the new URL has to go back into Firestore or every reader keeps
+ * hitting the now-dead one.
+ */
+export async function updateNoteContent(
+  note: Note,
+  content: string,
+): Promise<{ downloadURL: string; size: number }> {
+  if (note.type !== "markdown") {
+    throw new Error("Solo se pueden editar apuntes en Markdown");
+  }
+
+  const body = new Blob([content], { type: "text/markdown" });
+  if (body.size > MAX_NOTE_SIZE_BYTES.markdown) {
+    throw new Error(
+      `El apunte supera el tamaño máximo permitido (${MAX_NOTE_SIZE_BYTES.markdown / (1024 * 1024)}MB)`,
+    );
+  }
+
+  const storageRef = ref(storage, note.storagePath);
+  await uploadBytes(storageRef, body, { contentType: "text/markdown" });
+  const downloadURL = await getDownloadURL(storageRef);
+
+  await updateDoc(doc(db, "notes", note.id), { downloadURL, size: body.size });
+
+  return { downloadURL, size: body.size };
+}
+
+/** Uploads one image into a note's assets/ folder and returns its public URL. */
+export async function uploadNoteImage(note: Note, image: File): Promise<string> {
+  // A clipboard image often arrives with a useless or missing name, so fall back to the
+  // MIME type — which the clipboard does set reliably — to recover an extension.
+  const extensionFromType = Object.entries(IMAGE_CONTENT_TYPE_BY_EXTENSION).find(
+    ([, contentType]) => contentType === image.type,
+  )?.[0];
+  const name = isImageFile(image.name)
+    ? image.name
+    : extensionFromType
+      ? `imagen${extensionFromType}`
+      : null;
+
+  if (!name) {
+    throw new Error("Solo se pueden insertar imágenes .png, .jpg, .gif, .webp o .svg");
+  }
+  if (image.size > MAX_IMAGE_SIZE_BYTES) {
+    throw new Error(
+      `La imagen supera el tamaño máximo permitido (${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)}MB)`,
+    );
+  }
+
+  // Pasted screenshots all arrive as "image.png", so the timestamp keeps them from
+  // overwriting each other.
+  const fileName = `${Date.now()}-${name.replace(/[^\w.\-]+/g, "_")}`;
+  const assetRef = ref(storage, `notes/${note.yearId}/${note.subjectId}/${note.id}/assets/${fileName}`);
+  await uploadBytes(assetRef, image, { contentType: imageContentTypeFor(name) });
+
+  return getDownloadURL(assetRef);
 }
 
 interface UpdateNoteInput {

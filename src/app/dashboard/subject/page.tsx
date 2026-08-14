@@ -11,6 +11,7 @@ import { subscribeNotes, deleteNote } from "@/lib/firebase/notes";
 import type { Folder, Note, Subject, Year } from "@/types";
 import { NoteCard } from "@/components/notes/NoteCard";
 import { UploadNoteDialog } from "@/components/notes/UploadNoteDialog";
+import { NewNoteDialog } from "@/components/notes/NewNoteDialog";
 import { FolderCard } from "@/components/folders/FolderCard";
 import { FolderDialog } from "@/components/folders/FolderDialog";
 import { EmptyState } from "@/components/layout/EmptyState";
@@ -72,6 +73,7 @@ function SubjectPageInner() {
               </Button>
             }
           />
+          <NewNoteDialog yearId={yearId} subjectId={subjectId} />
           <UploadNoteDialog yearId={yearId} subjectId={subjectId} />
         </div>
       </div>
@@ -101,6 +103,7 @@ function SubjectPageInner() {
                   </Button>
                 }
               />
+              <NewNoteDialog yearId={yearId} subjectId={subjectId} />
               <UploadNoteDialog yearId={yearId} subjectId={subjectId} />
             </div>
           }
