@@ -9,4 +9,4 @@
  *
  * Bump it in the same commit as the change it ships.
  */
-export const APP_VERSION = "0.3.0";
+export const APP_VERSION = "0.3.1";

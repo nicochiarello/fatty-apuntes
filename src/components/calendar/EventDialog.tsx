@@ -9,7 +9,8 @@ import {
   type CalendarEventInput,
 } from "@/lib/firebase/calendar";
 import { instantFromZoned, minutesIntoZonedDay, zonedParts } from "@/lib/calendarTime";
-import type { CalendarEvent } from "@/types";
+import type { CalendarEvent, ReminderNode } from "@/types";
+import { ReminderEditor } from "@/components/calendar/ReminderEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +57,9 @@ export function EventDialog({
   const [date, setDate] = useState("");
   const [time, setTime] = useState("23:59");
   const [allDay, setAllDay] = useState(false);
+  const [reminders, setReminders] = useState<ReminderNode[]>([]);
+  // Captured when the dialog opens, so nothing here has to read the clock while rendering.
+  const [seedDueAt, setSeedDueAt] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleOpenChange = (next: boolean) => {
@@ -63,28 +67,38 @@ export function EventDialog({
     if (!next) return;
     // Re-seeded on every open so reopening after a cancel does not keep stale edits.
     const seed = event?.dueAt ?? defaultDate ?? Date.now();
+    setSeedDueAt(seed);
     setTitle(event?.title ?? "");
     setDescription(event?.description ?? "");
     setDate(dateInputValue(seed));
     setTime(event ? timeInputValue(event.dueAt) : "23:59");
     setAllDay(event?.allDay ?? false);
+    setReminders(event?.reminders ?? []);
   };
+
+  // Derived from the fields as they stand, so the reminder preview tracks the date being
+  // typed instead of the one already saved.
+  const draftDueAt = (() => {
+    const fallback = event?.dueAt ?? seedDueAt;
+    if (!date) return fallback;
+    const [year, month, day] = date.split("-").map(Number);
+    const [hour, minute] = allDay ? [0, 0] : time.split(":").map(Number);
+    if ([year, month, day, hour, minute].some(Number.isNaN)) return fallback;
+    return instantFromZoned(year, month, day, hour * 60 + minute);
+  })();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user || !title.trim() || !date) return;
 
-    const [year, month, day] = date.split("-").map(Number);
-    const [hour, minute] = allDay ? [0, 0] : time.split(":").map(Number);
-
     const input: CalendarEventInput = {
       title,
       description,
-      dueAt: instantFromZoned(year, month, day, hour * 60 + minute),
+      dueAt: draftDueAt,
       allDay,
       // Not exposed yet: the model carries it so events can be coloured per subject later.
       subjectId: event?.subjectId ?? null,
-      reminders: event?.reminders ?? [],
+      reminders,
     };
 
     setLoading(true);
@@ -161,6 +175,8 @@ export function EventDialog({
               />
               Todo el día
             </label>
+
+            <ReminderEditor value={reminders} onChange={setReminders} dueAt={draftDueAt} />
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="event-description">Detalle (opcional)</Label>
