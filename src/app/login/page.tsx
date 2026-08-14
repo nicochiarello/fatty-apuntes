@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { APP_VERSION } from "@/lib/version";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Logo } from "@/components/layout/Logo";
 import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
@@ -36,6 +37,9 @@ export default function LoginPage() {
             </p>
           </div>
           <GoogleSignInButton className="w-full" />
+          {/* Also shown here, not just behind the account menu, so someone who cannot get
+              in at all can still report which build they are on. */}
+          <p className="text-xs text-muted-foreground">v{APP_VERSION}</p>
         </CardContent>
       </Card>
     </div>

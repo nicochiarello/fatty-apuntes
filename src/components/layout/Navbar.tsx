@@ -3,6 +3,7 @@
 import { LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { APP_VERSION } from "@/lib/version";
 import { Logo } from "@/components/layout/Logo";
 import { InstallAppButton } from "@/components/layout/InstallAppButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -53,6 +54,10 @@ export function Navbar() {
                   <LogOut className="size-4" />
                   Cerrar sesión
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {/* Not a menu item: it is here to be read out when something looks wrong,
+                    not to be clicked. */}
+                <p className="px-2 py-1 text-xs text-muted-foreground">v{APP_VERSION}</p>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
