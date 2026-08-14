@@ -38,6 +38,14 @@ service cloud.firestore {
       allow read, write: if isApproved();
     }
 
+    // Shared by the whole group, same as notes: any approved account can add an event and
+    // any of them can mark it done. scheduleVersion is written by the app on reschedule and
+    // read back by the reminder tasks, so it is deliberately not locked down further —
+    // there is nothing here worth protecting from an already-approved member.
+    match /calendarEvents/{eventId} {
+      allow read, write: if isApproved();
+    }
+
     // One doc per browser/device, keyed by its FCM token. Nobody can read the collection
     // from the app — only the announceNote function, which runs with admin credentials and
     // bypasses these rules — so one person's tokens are never exposed to another's client.

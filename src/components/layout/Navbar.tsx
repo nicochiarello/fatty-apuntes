@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { CalendarDays, LogOut } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { APP_VERSION } from "@/lib/version";
@@ -37,7 +38,14 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Logo href="/dashboard" />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/dashboard/calendario"
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <CalendarDays className="size-4 shrink-0" />
+            <span className="hidden sm:inline">Calendario</span>
+          </Link>
           <InstallAppButton />
           {user && (
             <DropdownMenu>
