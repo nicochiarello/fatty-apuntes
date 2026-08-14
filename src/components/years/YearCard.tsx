@@ -7,8 +7,8 @@ import { Card } from "@/components/ui/card";
 
 export function YearCard({ year, onDelete }: { year: Year; onDelete: () => void }) {
   return (
-    <div className="group relative">
-      <Link href={`/dashboard/year?id=${year.id}`}>
+    <div className="group relative min-w-0">
+      <Link href={`/dashboard/year?id=${year.id}`} className="block">
         <Card className="flex h-full flex-col gap-3 p-5 transition-shadow hover:shadow-md">
           <span className="flex size-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
             <GraduationCap className="size-5" />

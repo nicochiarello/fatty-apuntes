@@ -18,8 +18,8 @@ export function FolderCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="group relative">
-      <Link href={`/dashboard/folder?year=${yearId}&subject=${subjectId}&id=${folder.id}`}>
+    <div className="group relative min-w-0">
+      <Link href={`/dashboard/folder?year=${yearId}&subject=${subjectId}&id=${folder.id}`} className="block">
         <Card className="flex h-full flex-col gap-3 p-5 transition-shadow hover:shadow-md">
           <span className="flex size-11 items-center justify-center rounded-xl bg-accent/15 text-accent">
             <FolderIcon className="size-5" />

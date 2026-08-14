@@ -20,8 +20,8 @@ export function SubjectCard({
   const color = SUBJECT_COLOR_MAP[subject.color] ?? SUBJECT_COLORS[0];
 
   return (
-    <div className="group relative">
-      <Link href={`/dashboard/subject?year=${yearId}&id=${subject.id}`}>
+    <div className="group relative min-w-0">
+      <Link href={`/dashboard/subject?year=${yearId}&id=${subject.id}`} className="block">
         <Card className="flex h-full flex-col gap-3 p-5 transition-shadow hover:shadow-md">
           <span className={`flex size-11 items-center justify-center rounded-xl ${color.bg} ${color.text}`}>
             <Icon className="size-5" />

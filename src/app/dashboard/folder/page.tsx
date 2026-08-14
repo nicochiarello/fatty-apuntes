@@ -49,16 +49,16 @@ function FolderPageInner() {
         ]}
       />
 
-      <div className="mb-8 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold break-words sm:text-3xl">
             {folder?.name ?? "Cargando…"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {subject ? `Carpeta dentro de ${subject.name}` : "Apuntes de la carpeta."}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <NewNoteDialog yearId={yearId} subjectId={subjectId} folderId={folderId} />
           <UploadNoteDialog yearId={yearId} subjectId={subjectId} folderId={folderId} />
         </div>
@@ -69,7 +69,7 @@ function FolderPageInner() {
       )}
 
       {folderNotes === null && folder !== null && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-36" />
           ))}
@@ -82,7 +82,7 @@ function FolderPageInner() {
           title="Todavía no hay apuntes en esta carpeta"
           description="Subí el primer apunte para esta carpeta."
           action={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <NewNoteDialog yearId={yearId} subjectId={subjectId} folderId={folderId} />
               <UploadNoteDialog yearId={yearId} subjectId={subjectId} folderId={folderId} />
             </div>
@@ -91,7 +91,7 @@ function FolderPageInner() {
       )}
 
       {folderNotes !== null && folderNotes.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {folderNotes.map((note) => (
             <NoteCard
               key={note.id}

@@ -21,7 +21,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between gap-4">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">Tus años</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -32,7 +32,7 @@ export default function DashboardPage() {
       </div>
 
       {years === null && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
@@ -49,7 +49,7 @@ export default function DashboardPage() {
       )}
 
       {years !== null && years.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {years.map((year) => (
             <YearCard key={year.id} year={year} onDelete={() => setYearToDelete(year)} />
           ))}

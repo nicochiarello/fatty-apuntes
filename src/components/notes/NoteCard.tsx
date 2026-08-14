@@ -39,16 +39,20 @@ export function NoteCard({
   };
 
   return (
-    <div className="group relative">
-      <Link href={`/note?year=${yearId}&subject=${note.subjectId}&id=${note.id}`}>
+    <div className="group relative min-w-0">
+      <Link href={`/note?year=${yearId}&subject=${note.subjectId}&id=${note.id}`} className="block">
         <Card className="flex h-full flex-col gap-3 p-5 transition-shadow hover:shadow-md">
           <span className="flex size-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
             <Icon className="size-5" />
           </span>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-display text-lg font-semibold leading-tight">{note.title}</h3>
-              <Badge variant={NOTE_TYPE_META[note.type].badgeVariant}>
+            {/* min-w-0 lets the title shrink past its longest word: a flex item defaults
+                to min-width:auto, which on a narrow phone pushes the badge off-screen. */}
+            <div className="flex items-start gap-2">
+              <h3 className="min-w-0 flex-1 break-words font-display text-lg font-semibold leading-tight">
+                {note.title}
+              </h3>
+              <Badge variant={NOTE_TYPE_META[note.type].badgeVariant} className="shrink-0">
                 {NOTE_TYPE_META[note.type].label}
               </Badge>
             </div>
@@ -58,16 +62,19 @@ export function NoteCard({
               </p>
             )}
           </div>
-          <div className="mt-auto flex items-center gap-2 pt-2 text-xs text-muted-foreground">
-            <Avatar className="size-5">
+          <div className="mt-auto flex min-w-0 items-center gap-2 pt-2 text-xs text-muted-foreground">
+            <Avatar className="size-5 shrink-0">
               <AvatarImage src={note.authorPhotoURL ?? undefined} alt={note.authorName} />
               <AvatarFallback className="text-[10px]">
                 {note.authorName.slice(0, 1).toUpperCase()}
               </AvatarFallback>
             </Avatar>
+            {/* Only the name gives way; the date is short and stays whole. */}
             <span className="truncate">{note.authorName}</span>
-            <span>·</span>
-            <span>{formatDistanceToNow(note.createdAt, { addSuffix: true, locale: es })}</span>
+            <span className="shrink-0">·</span>
+            <span className="shrink-0 whitespace-nowrap">
+              {formatDistanceToNow(note.createdAt, { addSuffix: true, locale: es })}
+            </span>
           </div>
         </Card>
       </Link>

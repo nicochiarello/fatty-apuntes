@@ -32,9 +32,9 @@ function YearPageInner() {
     <div>
       <Breadcrumbs items={[{ label: year?.name ?? "…" }]} />
 
-      <div className="mb-8 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold break-words sm:text-3xl">
             {year?.name ?? "Cargando…"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -53,7 +53,7 @@ function YearPageInner() {
       </div>
 
       {subjects === null && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
@@ -80,7 +80,7 @@ function YearPageInner() {
       )}
 
       {subjects !== null && subjects.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {subjects.map((subject) => (
             <SubjectCard
               key={subject.id}
