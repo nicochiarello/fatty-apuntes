@@ -43,3 +43,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generado por 'npm run build:shared' antes de desplegar functions
+/functions/shared/

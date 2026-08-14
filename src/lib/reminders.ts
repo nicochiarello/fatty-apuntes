@@ -3,8 +3,16 @@ import {
   instantFromZoned,
   startOfZonedDay,
   zonedParts,
-} from "@/lib/calendarTime";
-import type { CalendarEvent, ReminderNode } from "@/types";
+} from "./calendarTime";
+import type { CalendarEvent, ReminderNode } from "../types";
+
+/*
+ * Imported relatively rather than through the @/ alias, and this file is kept free of any
+ * browser or React dependency: the same two modules are compiled into the Cloud Functions
+ * package before deploy (see the build:shared script), and tsc does not rewrite path
+ * aliases in its output. One source of truth matters more than usual here — if the copies
+ * drifted, the editor's preview would confidently show times the server never fires.
+ */
 
 /**
  * Rule semantics for reminders, as a step-at-a-time transition rather than a precomputed

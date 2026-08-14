@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "emulators": "firebase emulators:start"
+    "emulators": "firebase emulators:start",
+    "build:shared": "tsc src/lib/calendarTime.ts src/lib/reminders.ts --module commonjs --target es2022 --moduleResolution node --rootDir src --outDir functions/shared --skipLibCheck"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.4",
