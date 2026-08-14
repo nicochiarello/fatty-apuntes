@@ -39,6 +39,22 @@ export async function getNotificationState(): Promise<NotificationState> {
   return localStorage.getItem(TOKEN_STORAGE_KEY) ? "on" : "off";
 }
 
+/**
+ * The push subscription belongs to a service worker registration, and ours is registered
+ * from an effect on mount — so someone who opens the account menu immediately can get here
+ * first. Waits for it, but never indefinitely: `ready` simply never resolves when nothing
+ * is registering at all, which is exactly the case in development.
+ */
+async function serviceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
+  const existing = await navigator.serviceWorker.getRegistration();
+  if (existing) return existing;
+
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+  ]);
+}
+
 export async function enableNotifications(uid: string): Promise<NotificationState> {
   if (!(await notificationsSupported())) return "unsupported";
   if (!VAPID_KEY) return "unconfigured";
@@ -46,11 +62,8 @@ export async function enableNotifications(uid: string): Promise<NotificationStat
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return permission === "denied" ? "denied" : "off";
 
-  // The push subscription belongs to a service worker registration, and ours is only
-  // registered in production (see ServiceWorkerRegister) — so this is also what makes the
-  // toggle a no-op in development rather than half-registering something.
-  const registration = await navigator.serviceWorker.getRegistration();
-  if (!registration) throw new Error("El service worker todavía no está listo");
+  const registration = await serviceWorkerRegistration();
+  if (!registration) throw new Error("El service worker todavía no está listo, probá de nuevo");
 
   const { getMessaging, getToken } = await import("firebase/messaging");
   const token = await getToken(getMessaging(app), {
